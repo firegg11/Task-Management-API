@@ -8,6 +8,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Dynamically determine BASE_URL for local or deployed environment
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
 app.use(cors());
 app.use(express.json());
 
@@ -19,7 +22,7 @@ const swaggerDocument = {
     version: '1.0.0',
     description: 'A complete REST API for managing tasks'
   },
-  servers: [{ url: `http://localhost:${PORT}` }],
+  servers: [{ url: BASE_URL }],
   paths: {
     '/health': {
       get: {
@@ -31,20 +34,25 @@ const swaggerDocument = {
 };
 
 // Setup Swagger UI
-app.use('/task-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Task Management API Docs'
 }));
 
-
-
-// Root
+// Root endpoint listing all API info and endpoints
 app.get('/', (req, res) => {
   res.json({
     name: 'Task Management API',
     version: '1.0.0',
-    docs: `http://localhost:${PORT}/task-docs`
+    status: 'running',
+    documentation: `${BASE_URL}/api-docs`,
+    endpoints: {
+      health: `${BASE_URL}/health`,
+      auth: `${BASE_URL}/api/auth`,
+      tasks: `${BASE_URL}/api/tasks`,
+      categories: `${BASE_URL}/api/categories`
+    }
   });
 });
 
@@ -54,6 +62,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-  console.log(`📚 Swagger docs at http://localhost:${PORT}/task-docs`);
+  console.log(`✅ Server running at ${BASE_URL}`);
+  console.log(`📚 Swagger docs at ${BASE_URL}/api-docs`);
 });
